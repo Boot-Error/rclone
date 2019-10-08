@@ -250,13 +250,17 @@ func (f *File) ModTime() (modTime time.Time) {
 		// if o is nil it isn't valid yet or there are writers, so return the size so far
 		if f.o == nil || len(f.writers) != 0 || f.readWriterClosing {
 			if !f.pendingModTime.IsZero() {
+				fs.Infof(f.o, "ModTime() - pending: %v (len(f.writers)=%d, f.readWriterClosing=%v)", f.pendingModTime, len(f.writers), f.readWriterClosing)
 				return f.pendingModTime
 			}
 		} else {
-			return f.o.ModTime(context.TODO())
+			t := f.o.ModTime(context.TODO())
+			fs.Infof(f.o, "ModTime() - from object: %v", t)
+			return t
 		}
 	}
 
+	fs.Infof(f.o, "ModTime() - from directory: %v", f.d.modTime)
 	return f.d.modTime
 }
 
@@ -288,6 +292,7 @@ func (f *File) SetModTime(modTime time.Time) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
+	fs.Infof(f.o, "Setting pending mod time to %v", modTime)
 	f.pendingModTime = modTime
 
 	// Only update the ModTime when there are no writers, setObject will do it
@@ -311,6 +316,7 @@ func (f *File) applyPendingModTime() error {
 		return errors.New("Cannot apply ModTime, file object is not available")
 	}
 
+	fs.Infof(f.o, "Setting Modtime to %v (zero %v)", f.pendingModTime, f.pendingModTime.IsZero())
 	err := f.o.SetModTime(context.TODO(), f.pendingModTime)
 	switch err {
 	case nil:

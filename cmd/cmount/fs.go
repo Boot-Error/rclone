@@ -167,6 +167,7 @@ func (fsys *FS) stat(node vfs.Node, stat *fuse.Stat_t) (errc int) {
 	//stat.Rdev
 	stat.Size = int64(Size)
 	t := fuse.NewTimespec(modTime)
+	fs.Infof(node.Path(), "stat ModTime = %#v (%v)", t, modTime)
 	stat.Atim = t
 	stat.Mtim = t
 	stat.Ctim = t
